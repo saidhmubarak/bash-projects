@@ -42,6 +42,7 @@ do
 	esac
 done
 
+
 google() {
 	g_results=$(mktemp XXXXXX.txt)
 	lynx -dump "https://www.google.com/search?q=$dork&num=200" > "$g_results"
@@ -58,8 +59,8 @@ regex() {
 form_out(){
 	while read line; do
 		if [[ $line =~ $reg ]]; then
-			echo "[+] $line" | grep -v "google.com" | grep -v "youtube.com"
-		sleep 0.5 | tee -a $file
+			echo "[+] $line" | grep -v "google.com" | grep -v "youtube.com" | tee $file
+		sleep 0.5
 		fi
 	done < "$f_results"
 }
