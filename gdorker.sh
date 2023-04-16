@@ -4,6 +4,18 @@ long=dork:,engine:,out-put:,help
 args=$@
 options=$(getopt -a -n error -o $short -l $long -- "$@")
 eval set -- $options
+
+#check for current user
+user_check() {
+	if [[ ($(echo $UID) = 0) ]]; then
+		echo "you are root, so going on..."
+	else
+		echo "Please execute as root user"
+		exit
+	fi
+}
+
+#check for internet connection
 check_internet() {
 	if [[ $(ping -c 1 google.com 2> /dev/null) ]]; then
 		echo "internet is up and running, good to go..."
@@ -13,6 +25,7 @@ check_internet() {
 	fi
 }
 
+#respond to the keybord int signal
 exit_sig() {
 	echo "ctrl+c detected, cleaning up"
 	rm -rf $g_results $f_results
@@ -22,6 +35,7 @@ exit_sig() {
 
 trap exit_sig SIGINT
 
+#show usage and exit
 usage() {
 	cat <<- _EOF_
 	Usage $(basename $0)
@@ -30,7 +44,7 @@ usage() {
 	-o, --out-put	specify a file name for save results(optional)
 	-h, --help	show this help menu and exit
 	_EOF_
-	echo "eg: ./gdork.sh -d <dork> -e google -o file.txt"
+	echo "eg: sudo ./gdork.sh -d <dork> -e google -o file.txt"
 	exit
 }
 
@@ -61,12 +75,13 @@ do
 	esac
 done
 
-
+#receve data from google and write it to a file
 google() {
 	g_results=$(mktemp XXXXXX.txt)
 	lynx -dump "https://www.google.com/search?q=$dork&num=200" > "$g_results"
 }
 
+#regular expression to extract data
 regex() {
 	f_results=$(mktemp XXXXXX.txt)	
 	reg='http.?://[w]{3}\.[[:alnum:]].[[:alpha:]]{2,3}'
@@ -75,6 +90,7 @@ regex() {
 	done < "$g_results"
 }
 
+#print out put to terminal
 form_out(){
 	while read line; do
 		if [[ $line =~ $reg ]]; then
@@ -84,6 +100,7 @@ form_out(){
 	done < "$f_results"
 }
 
+#check for existing file
 output_file() {
 	if [[ -e $file ]]; then
 		read -p "File already exist, do you want to overwrite (y/n) " respns
