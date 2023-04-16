@@ -4,6 +4,24 @@ long=dork:,engine:,out-put:,help
 args=$@
 options=$(getopt -a -n error -o $short -l $long -- "$@")
 eval set -- $options
+check_internet() {
+	if [[ $(ping -c 1 google.com 2> /dev/null) ]]; then
+		echo "internet is up and running, good to go..."
+	else
+		echo "internet is down, shuttingdown now!!!"
+		exit
+	fi
+}
+
+exit_sig() {
+	echo "ctrl+c detected, cleaning up"
+	rm -rf $g_results $f_results
+	echo "shutting down!!!"
+	exit
+}
+
+trap exit_sig SIGINT
+
 usage() {
 	cat <<- _EOF_
 	Usage $(basename $0)
@@ -15,6 +33,7 @@ usage() {
 	echo "eg: ./gdork.sh -d <dork> -e google -o file.txt"
 	exit
 }
+
 while :
 do
 	case $1 in
@@ -90,11 +109,13 @@ if [[ -z $args || $args == [a-zA-Z0-9] ]]; then
 	usage
 else
 	if [[ -n $file ]]; then
+		check_internet
 		output_file
 		google
 		regex
 		form_out
 	else
+		check_internet
 		google
 		regex
 		form_out
