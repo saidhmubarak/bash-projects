@@ -8,9 +8,9 @@ eval set -- $options
 #check for current user
 user_check() {
 	if [[ ($(echo $UID) = 0) ]]; then
-		echo "you are root, so going on..."
+		echo "[+] you are root, so going on..."
 	else
-		echo "Please execute as root user"
+		echo "[!] Please execute as root user"
 		exit
 	fi
 }
@@ -25,11 +25,30 @@ check_internet() {
 	fi
 }
 
+tor_up() {
+	echo "[+] checking tor status"
+	if [[ $(service tor status | grep Active) =~ "Active: inactive (dead)" ]]; then
+		echo "[-] tor is down"
+		echo "[!] starting it for you, this might take some time"
+		service tor start
+		if [[ $(service tor status | grep Active) =~ "Active: active (exited)" ]]; then
+			echo "[+] tor is running"
+		else
+			echo "something went wrong, exiting!!!"
+			exit
+		fi
+	else
+		echo "[+] tor is up"
+	fi
+}	
+
 #respond to the keybord int signal
 exit_sig() {
-	echo "ctrl+c detected, cleaning up"
+	echo "[!] ctrl+c detected, cleaning up"
 	rm -rf $g_results $f_results
-	echo "shutting down!!!"
+	echo "[!] stoping tor"
+	service tor stop
+	echo "[!] shutting down!!!"
 	exit
 }
 
@@ -122,17 +141,23 @@ output_file() {
 		touch $file
 	fi
 }
+
+#evaluating the positional parameters
 if [[ -z $args || $args == [a-zA-Z0-9] ]]; then
 	usage
 else
 	if [[ -n $file ]]; then
+		user_check
 		check_internet
+		tor_up
 		output_file
 		google
 		regex
 		form_out
 	else
+		user_check
 		check_internet
+		tor_up
 		google
 		regex
 		form_out
